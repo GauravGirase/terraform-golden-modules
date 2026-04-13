@@ -2,12 +2,15 @@ package global.regions
 
 allowed_regions := {"ap-south-1", "us-east-1"}
 
-deny contains msg if {
+deny contains msg  {
   some r
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
-  region := r.change.after.region
+  after := r.change.after
+  after != null
+
+  region := object.get(after, "region", null)
   region != null
 
   not region in allowed_regions
