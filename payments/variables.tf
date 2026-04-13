@@ -2,6 +2,11 @@
 # Core Inputs
 ########################################
 
+variable "region" {
+  description = "Region name"
+  type        = string
+}
+
 variable "bucket_name" {
   description = "Globally unique S3 bucket name"
   type        = string
