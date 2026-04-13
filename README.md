@@ -22,7 +22,7 @@ terraform show -json tfplan.binary > tfplan.json
 conftest test tfplan.json --policy policy-repo/
 ```
 ```bash
-package s3.security
+package main
 
 deny contains msg if {
   resource := input.resource_changes[_]
@@ -33,4 +33,11 @@ deny contains msg if {
 
   msg := sprintf("S3 bucket %s is public", [resource.address])
 }
+```
+```bash
+conftest test tfplan.json --policy policies/s3_v3.rego
+```
+output:
+```bash
+1 test, 1 passed, 0 warnings, 0 failures, 0 exceptions
 ```
