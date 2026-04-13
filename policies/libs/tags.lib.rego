@@ -1,21 +1,39 @@
 package lib.tags
 
+########################################
 # Required tags across org
+########################################
+
 required_tags := {"env", "owner", "cost_center"}
 
+########################################
 # Returns missing tags
-missing_tags(tags) = missing {
+########################################
+
+missing_tags(tags) = missing if {
   missing := required_tags - object.keys(tags)
 }
 
-# Validate tag values (optional strict mode)
+########################################
+# Valid environments
+########################################
+
 valid_envs := {"dev", "staging", "prod"}
 
-invalid_env(tags) {
+########################################
+# Invalid env detection (safe)
+########################################
+
+invalid_env(tags) if {
   tags.env
   not tags.env in valid_envs
 }
 
-empty_tag(tags, key) {
+########################################
+# Empty tag detection (safe access)
+########################################
+
+empty_tag(tags, key) if {
+  key in object.keys(tags)
   tags[key] == ""
 }

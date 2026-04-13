@@ -1,7 +1,7 @@
 package network.subnets
 
 # Must have at least 2 AZs (HA requirement)
-deny[msg] {
+deny contains msg if {
   subnets := [r | r := input.resource_changes[_]; r.type == "aws_subnet"]
 
   count(subnets) < 2
@@ -10,7 +10,8 @@ deny[msg] {
 }
 
 # Public subnets must auto-assign public IP
-deny[msg] {
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_subnet"
 
@@ -21,7 +22,8 @@ deny[msg] {
 }
 
 # Private subnets must NOT assign public IP
-deny[msg] {
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_subnet"
 

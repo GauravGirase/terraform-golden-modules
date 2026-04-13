@@ -1,17 +1,19 @@
 package network.vpc
 
 # Enforce private CIDR ranges only
-deny[msg] {
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_vpc"
 
   not startswith(r.change.after.cidr_block, "10.")
 
-  msg := sprintf("VPC '%s' must use private CIDR (10.x.x.x)", [r.name])
+  msg := sprintf("VPC '%s' must use private CIDR (10.x.x.x)", [r.change.after.cidr_block])
 }
 
 # DNS must be enabled
-deny[msg] {
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_vpc"
 
@@ -20,7 +22,9 @@ deny[msg] {
   msg := "DNS support must be enabled for VPC"
 }
 
-deny[msg] {
+# DNS hostnames must be enabled
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_vpc"
 

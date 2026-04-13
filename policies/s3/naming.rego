@@ -1,13 +1,21 @@
 package s3.naming
 
-deny[msg] {
+########################################
+# S3 bucket naming convention
+########################################
+
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
-  not startswith(r.change.after.bucket, "org-")
+  bucket := r.change.after.bucket
+  bucket != null
+
+  not startswith(bucket, "org-")
 
   msg := sprintf(
     "Bucket '%s' must follow naming convention org-<app>-<env>",
-    [r.change.after.bucket]
+    [bucket]
   )
 }

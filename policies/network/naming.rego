@@ -1,10 +1,13 @@
 package network.naming
 
-deny[msg] {
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_vpc"
 
-  not startswith(r.change.after.tags.Name, "org-")
+  name := r.change.after.tags.Name
+
+  not startswith(name, "org-")
 
   msg := "VPC name must follow org-<env>-vpc format"
 }

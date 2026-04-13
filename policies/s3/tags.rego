@@ -2,34 +2,60 @@ package s3.tags
 
 import data.lib.tags
 
-deny[msg] {
+########################################
+# Missing required tags
+########################################
+
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
-  missing := tags.missing_tags(r.change.after.tags)
+  tags_obj := r.change.after.tags
+  tags_obj != null
+
+  missing := tags.missing_tags(tags_obj)
 
   count(missing) > 0
 
-  msg := sprintf("S3 bucket '%s' missing tags: %v",
-    [r.change.after.bucket, missing])
+  msg := sprintf(
+    "S3 bucket '%s' missing tags: %v",
+    [r.change.after.bucket, missing]
+  )
 }
 
-deny[msg] {
+########################################
+# Invalid env tag
+########################################
+
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
-  tags.invalid_env(r.change.after.tags)
+  tags_obj := r.change.after.tags
+  tags.invalid_env(tags_obj)
 
-  msg := sprintf("Invalid env tag for bucket '%s'",
-    [r.change.after.bucket])
+  msg := sprintf(
+    "Invalid env tag for bucket '%s'",
+    [r.change.after.bucket]
+  )
 }
 
-deny[msg] {
+########################################
+# Owner tag must not be empty
+########################################
+
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
-  tags.empty_tag(r.change.after.tags, "owner")
+  tags_obj := r.change.after.tags
+  tags.empty_tag(tags_obj, "owner")
 
-  msg := sprintf("Owner tag cannot be empty for '%s'",
-    [r.change.after.bucket])
+  msg := sprintf(
+    "Owner tag cannot be empty for '%s'",
+    [r.change.after.bucket]
+  )
 }

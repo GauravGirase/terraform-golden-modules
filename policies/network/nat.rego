@@ -1,19 +1,20 @@
 package network.nat
 
 # NAT Gateway must exist (for private subnet internet access)
-deny[msg] {
+deny contains msg if {
   not nat_exists
   msg := "NAT Gateway must be configured"
 }
 
-nat_exists {
+nat_exists if {
   some r
   r := input.resource_changes[_]
   r.type == "aws_nat_gateway"
 }
 
 # Enforce Elastic IP usage
-deny[msg] {
+deny contains msg if {
+  some r
   r := input.resource_changes[_]
   r.type == "aws_nat_gateway"
 
