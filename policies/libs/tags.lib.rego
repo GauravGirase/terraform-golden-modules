@@ -25,8 +25,9 @@ valid_envs := {"dev", "staging", "prod"}
 ########################################
 
 invalid_env(tags) if {
-  tags.env
-  not tags.env in valid_envs
+  val := tags.env
+  val != null
+  not val in valid_envs
 }
 
 ########################################

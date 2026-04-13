@@ -11,8 +11,7 @@ deny contains msg if {
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
-  tags_obj := r.change.after.tags
-  tags_obj != null
+  tags_obj := object.get(r.change.after, "tags", {})
 
   missing := tags.missing_tags(tags_obj)
 
@@ -33,7 +32,8 @@ deny contains msg if {
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
-  tags_obj := r.change.after.tags
+  tags_obj := object.get(r.change.after, "tags", {})
+
   tags.invalid_env(tags_obj)
 
   msg := sprintf(
@@ -51,7 +51,8 @@ deny contains msg if {
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
-  tags_obj := r.change.after.tags
+  tags_obj := object.get(r.change.after, "tags", {})
+
   tags.empty_tag(tags_obj, "owner")
 
   msg := sprintf(
