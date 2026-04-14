@@ -1,10 +1,25 @@
 pipeline {
     agent any
 
+    environment {
+        TF_IN_AUTOMATION = "true"
+        POLICY_DIR = "opa-policy"
+    }
+
     stages {
-        stage('Checkout') {
+
+        stage('Checkout Terraform Repo') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Checkout OPA Policy Repo') {
+            steps {
+                dir("${POLICY_DIR}") {
+                    git branch: 'main',
+                        url: 'https://github.com/your-org/opa-policies.git'
+                }
             }
         }
 
@@ -32,7 +47,7 @@ pipeline {
                     sh """
                       opa eval \
                       --format=json \
-                      --data policy \
+                      --data ${POLICY_DIR} \
                       --input tfplan.json \
                       "data.terraform.deny" > opa_result.json
                     """
