@@ -5,7 +5,6 @@ package s3.naming
 ########################################
 
 deny contains msg if {
-  some r
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
