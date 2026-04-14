@@ -10,7 +10,8 @@ pipeline {
 
         stage('Checkout Terraform Repo') {
             steps {
-                checkout scm
+                git branch: 'app-infra',
+                        url: 'https://github.com/GauravGirase/terraform-golden-modules.git'
             }
         }
 
@@ -18,7 +19,7 @@ pipeline {
             steps {
                 dir("${POLICY_DIR}") {
                     git branch: 'main',
-                        url: 'https://github.com/your-org/opa-policies.git'
+                        url: 'https://github.com/GauravGirase/terraform-golden-modules.git'
                 }
             }
         }
