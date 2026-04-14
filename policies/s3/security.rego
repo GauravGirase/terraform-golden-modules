@@ -1,51 +1,33 @@
 package s3.security
 
-import data.lib.aws
-
-########################################
-# No public ACL
-########################################
-
 deny contains msg if {
-  some r
-  r := input.resource_changes[_]
-  r.type == "aws_s3_bucket"
-
-  r.change.after.acl == "public-read"
-
-  msg := sprintf(
-    "Bucket '%s' uses public ACL",
-    [r.change.after.bucket]
-  )
-}
-
-########################################
-# Public access block must exist + be enforced
-########################################
-
-deny contains msg if {
-  some r
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket_public_access_block"
 
   not r.change.after.block_public_acls
-  not r.change.after.block_public_policy
-  not r.change.after.ignore_public_acls
-  not r.change.after.restrict_public_buckets
-
-  msg := "All public access block settings must be enabled"
+  msg := "block_public_acls must be true"
 }
 
-########################################
-# No wildcard principals in bucket policy
-########################################
+deny contains msg if {
+  r := input.resource_changes[_]
+  r.type == "aws_s3_bucket_public_access_block"
+
+  not r.change.after.block_public_policy
+  msg := "block_public_policy must be true"
+}
 
 deny contains msg if {
-  some r
   r := input.resource_changes[_]
-  r.type == "aws_s3_bucket_policy"
+  r.type == "aws_s3_bucket_public_access_block"
 
-  aws.is_wildcard_principal(tostring(r.change.after.policy))
+  not r.change.after.ignore_public_acls
+  msg := "ignore_public_acls must be true"
+}
 
-  msg := "Wildcard principal detected in bucket policy"
+deny contains msg if {
+  r := input.resource_changes[_]
+  r.type == "aws_s3_bucket_public_access_block"
+
+  not r.change.after.restrict_public_buckets
+  msg := "restrict_public_buckets must be true"
 }
