@@ -1,13 +1,7 @@
 pipeline {
     agent any
 
-    environment {
-        TF_IN_AUTOMATION = "true"
-        OPA_POLICY_DIR = "policy"   // directory where rego files exist
-    }
-
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -35,29 +29,21 @@ pipeline {
         stage('OPA Policy Check') {
             steps {
                 script {
-                    def result = sh(
-                        script: """
-                        opa eval \
-                          --format=json \
-                          --data ${OPA_POLICY_DIR} \
-                          --input tfplan.json \
-                          "data.terraform.deny" > opa_result.json
-                        """,
-                        returnStatus: true
-                    )
+                    sh """
+                      opa eval \
+                      --format=json \
+                      --data policy \
+                      --input tfplan.json \
+                      "data.terraform.deny" > opa_result.json
+                    """
 
-                    // Read OPA output
-                    def opaOutput = readFile('opa_result.json')
-                    echo "OPA Output: ${opaOutput}"
-
-                    // Fail build if deny rules triggered
                     def violations = sh(
-                        script: "cat opa_result.json | jq '.result[0].expressions[0].value | length'",
+                        script: "jq '.result[0].expressions[0].value | length' opa_result.json",
                         returnStdout: true
                     ).trim()
 
                     if (violations != "0") {
-                        error "OPA policy violations found! Failing the build."
+                        error "OPA policy violations found!"
                     }
                 }
             }
@@ -66,10 +52,14 @@ pipeline {
 
     post {
         success {
-            echo "✅ OPA checks passed. PR can be merged."
+            script {
+                githubNotify context: 'OPA Policy Check', status: 'SUCCESS'
+            }
         }
         failure {
-            echo "❌ OPA checks failed. PR merge should be blocked."
+            script {
+                githubNotify context: 'OPA Policy Check', status: 'FAILURE'
+            }
         }
     }
 }
