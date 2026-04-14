@@ -2,11 +2,20 @@ pipeline {
     agent any
 
     environment {
+        AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+        AWS_DEFAULT_REGION    = 'us-east-1'
         TF_IN_AUTOMATION = "true"
-        POLICY_DIR = "opa-policy"
+        POLICY_DIR = "policies/s3"
     }
 
     stages {
+        
+        stage('Verify AWS') {
+            steps {
+                sh 'aws sts get-caller-identity'
+            }
+        }
 
         stage('Checkout Terraform Repo') {
             steps {
@@ -46,11 +55,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                      opa eval \
-                      --format=json \
-                      --data ${POLICY_DIR} \
-                      --input tfplan.json \
-                      "data.terraform.deny" > opa_result.json
+                      conftest test tfplan.json --policy ./policies/s3 --all-namespaces
                     """
 
                     def violations = sh(
