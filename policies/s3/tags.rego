@@ -1,20 +1,53 @@
 package s3.tags
 
-import data.lib.tags
+########################################
+# Required tags across org
+########################################
 
+required_tags := {"env", "owner", "cost_center"}
+########################################
+# Returns missing tags
+########################################
+
+missing_tags(tags) = missing if {
+  missing := required_tags - object.keys(tags)
+}
+
+########################################
+# Valid environments
+########################################
+
+valid_envs := {"dev", "staging", "prod"}
+
+########################################
+# Invalid env detection (safe)
+########################################
+
+invalid_env(tags) if {
+  tags.env
+  not tags.env in valid_envs
+}
+
+########################################
+# Empty tag detection (safe access)
+########################################
+
+empty_tag(tags, key) if {
+  key in object.keys(tags)
+  tags[key] == ""
+}
 ########################################
 # Missing required tags
 ########################################
 
 deny contains msg if {
-  some r
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
   tags_obj := r.change.after.tags
   tags_obj != null
 
-  missing := tags.missing_tags(tags_obj)
+  missing := missing_tags(tags_obj)
 
   count(missing) > 0
 
@@ -29,12 +62,11 @@ deny contains msg if {
 ########################################
 
 deny contains msg if {
-  some r
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
   tags_obj := r.change.after.tags
-  tags.invalid_env(tags_obj)
+  invalid_env(tags_obj)
 
   msg := sprintf(
     "Invalid env tag for bucket '%s'",
@@ -47,12 +79,11 @@ deny contains msg if {
 ########################################
 
 deny contains msg if {
-  some r
   r := input.resource_changes[_]
   r.type == "aws_s3_bucket"
 
   tags_obj := r.change.after.tags
-  tags.empty_tag(tags_obj, "owner")
+  empty_tag(tags_obj, "owner")
 
   msg := sprintf(
     "Owner tag cannot be empty for '%s'",
